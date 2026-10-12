@@ -572,6 +572,106 @@ describe("function comparison", () => {
   });
 });
 
+describe("function comparison Swift string literals", () => {
+  const withLiterals = (base: "0x1000" | "0x2000", values: readonly string[]) =>
+    functionDossierSchema.parse({
+      ...dossier("return 0;", base),
+      swift_string_literals: values.map((value) => ({
+        source_address: base,
+        value,
+        representation: "small" as const,
+        address: null,
+        registers: ["x0", "x1"] as const,
+        words: ["0x0", "0xe"] as const,
+      })),
+    });
+  const stringsDimension = (
+    leftDigit: string,
+    left: ReturnType<typeof withLiterals> | ReturnType<typeof dossier>,
+    rightDigit: string,
+    right: ReturnType<typeof withLiterals> | ReturnType<typeof dossier>,
+  ) =>
+    compareFunctions(
+      observe(leftDigit, left),
+      observe(rightDigit, right),
+    ).dimensions.find(({ dimension }) => dimension === "strings_names");
+
+  it("treats differing decoded literals as a strings and names change", () => {
+    expect(
+      stringsDimension(
+        "1",
+        withLiterals("0x1000", ["SleepDisabled"]),
+        "2",
+        withLiterals("0x2000", ["Holding awake"]),
+      ),
+    ).toMatchObject({ status: "changed" });
+  });
+
+  it("matches the same decoded literal after the function is relocated", () => {
+    expect(
+      stringsDimension(
+        "3",
+        withLiterals("0x1000", ["SleepDisabled"]),
+        "4",
+        withLiterals("0x2000", ["SleepDisabled"]),
+      ),
+    ).toMatchObject({ status: "unchanged" });
+  });
+
+  it("keeps strings and names unknown when only one dossier recorded Swift literals", () => {
+    expect(
+      stringsDimension(
+        "5",
+        withLiterals("0x1000", []),
+        "6",
+        dossier("return 0;", "0x2000"),
+      ),
+    ).toMatchObject({
+      status: "unknown",
+      limitations: [
+        "Swift String literal coverage differs or is partial; referenced strings and names match, but decoded literals were not compared.",
+      ],
+    });
+  });
+
+  it("reports a referenced name change even when Swift literal coverage differs", () => {
+    const named = functionDossierSchema.parse({
+      ...dossier("return 0;", "0x2000"),
+      referenced_names: [
+        { address: "0x3000", value: "helper", source_address: "0x2000" },
+      ],
+    });
+    expect(
+      stringsDimension("7", withLiterals("0x1000", []), "8", named),
+    ).toMatchObject({ status: "changed" });
+  });
+
+  it("does not equate a partial literal record with a complete one", () => {
+    const partial = functionDossierSchema.parse({
+      ...withLiterals("0x2000", ["SleepDisabled"]),
+      swift_string_literal_omissions: [
+        {
+          source_address: "0x2000",
+          representation: "large",
+          address: "0x3000",
+          byte_length: 64,
+          reason: "capacity",
+          registers: ["x0", "x1"],
+          words: ["0xd000000000000040", "0x8000000000002fe0"],
+        },
+      ],
+    });
+    expect(
+      stringsDimension(
+        "9",
+        withLiterals("0x1000", ["SleepDisabled"]),
+        "a",
+        partial,
+      ),
+    ).toMatchObject({ status: "unknown" });
+  });
+});
+
 const expectInlineComparisonEvidence = (
   result: ReturnType<typeof compareFunctions>,
 ): void => {
