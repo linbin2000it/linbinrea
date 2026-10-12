@@ -45,6 +45,8 @@ const SOURCE_PATHS = {
     "dist/contracts/native/binaryDiagnosticsToolContracts.js",
   pwntoolsProvider: "dist/native/pwntools/PwntoolsRelease.js",
   nativeContracts: "dist/contracts/native/nativeToolContracts.js",
+  signalContracts: "dist/contracts/signals/signalToolContracts.js",
+  signalProvider: "dist/signals/SigrokRecordingProvider.js",
   wasmContracts: "dist/contracts/wasm/wasmToolContracts.js",
   wasmProvider: "dist/wasm/WabtRelease.js",
   evmContracts: "dist/contracts/evm/evmToolContracts.js",

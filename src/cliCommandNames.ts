@@ -1,5 +1,6 @@
 /** Canonical names used by every one-shot CLI command registration. */
 export const CLI_COMMANDS = Object.freeze({
+  decodeSignalRecording: "decode-signal-recording",
   inspectWasmArtifact: "inspect-wasm-artifact",
   inspectEvmInterface: "inspect-evm-interface",
   inspectWebNetworkCapture: "inspect-web-network-capture",

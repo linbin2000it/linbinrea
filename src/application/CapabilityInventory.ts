@@ -41,6 +41,7 @@ type ToolAvailabilityReason = "available" | ToolUnavailabilityReason;
 
 type ProviderDescriptor = ProviderCapability;
 export type AvailabilityPolicy = {
+  readonly signalRecordingEnabled?: boolean;
   readonly wasmArtifactEnabled?: boolean;
   readonly evmInterfaceEnabled?: boolean;
   readonly processCaptureEnabled: boolean;
@@ -379,6 +380,14 @@ const workflowAvailabilityFor = ({
           reason: "provider_missing",
           remediation:
             "On Linux x64, set absolute REA_PWNTOOLS_PYTHON to caller-supplied Python with pwntools 4.15.0. No active binary target is required.",
+        };
+  if (name === "decode_signal_recording")
+    return policy.signalRecordingEnabled === true
+      ? { reason: "available", remediation: null }
+      : {
+          reason: "provider_missing",
+          remediation:
+            "Supply sigrok-cli 0.7.2 via absolute REA_SIGROK_COMMAND. No active binary target or hardware is required; the tool is checked at execution.",
         };
   if (name === "inspect_wasm_artifact")
     return policy.wasmArtifactEnabled === true

@@ -42,6 +42,7 @@ export default defineConfig({
           { text: "Android applications", link: "/android-analysis" },
           { text: "Apple applications", link: "/apple-application-analysis" },
           { text: "Firmware", link: "/firmware-analysis" },
+          { text: "Signal recordings", link: "/signal-recordings" },
           {
             text: "Reconstruction readiness",
             link: "/reconstruction-readiness",

@@ -1,3 +1,6 @@
+import type { SignalRecordingService } from "../application/signals/SignalRecordingService.js";
+import { createSignalRecordingService } from "../composition/signals.js";
+import { registerSignalTools } from "./registerSignalTools.js";
 import type { WasmArtifactService } from "../application/wasm/WasmArtifactService.js";
 import { createWasmArtifactService } from "../composition/wasm.js";
 import { registerWasmTools } from "./registerWasmTools.js";
@@ -109,6 +112,7 @@ const ACTIVE_TARGET_INSTRUCTIONS =
 export interface CreateServerOptions {
   readonly environment?: Readonly<NodeJS.ProcessEnv>;
   readonly delivery?: ToolResultDelivery;
+  readonly signalRecording?: SignalRecordingService;
   readonly wasmArtifact?: WasmArtifactService;
   readonly evmInterface?: EvmInterfaceService;
   readonly logger?: Logger;
@@ -147,6 +151,9 @@ const installSessionToolAvailability = (
   const policy = sessionAvailabilityPolicy(options.availabilityPolicy, {
     optionalProviderLoadFailures: options.optionalProviderLoadFailures,
     optionalFeatures: {
+      signalRecordingEnabled:
+        options.signalRecording !== undefined ||
+        isAbsolute(environment.REA_SIGROK_COMMAND ?? ""),
       wasmArtifactEnabled:
         options.wasmArtifact !== undefined ||
         isAbsolute(environment.REA_WABT_BIN_DIRECTORY ?? ""),
@@ -246,6 +253,8 @@ export const createServer = (
   );
   const android =
     options.androidAnalysis ?? createAndroidAnalysisProvider(environment);
+  const signalRecording =
+    options.signalRecording ?? createSignalRecordingService(environment);
   const wasmArtifact =
     options.wasmArtifact ?? createWasmArtifactService(environment);
   const apktool =
@@ -259,6 +268,7 @@ export const createServer = (
     providerClose ??= Promise.allSettled([
       android.close(),
       wasmArtifact.close(),
+      signalRecording.close(),
       apktool.close(),
       jeb.close(),
       adbDevice.close(),
@@ -326,6 +336,13 @@ export const createServer = (
     for (const result of results)
       if (result.status === "rejected") throw result.reason;
   };
+  registerSignalTools(
+    server,
+    signalRecording,
+    toolLogger,
+    recordEvidence,
+    analysisAdmission,
+  );
   registerConfiguredAnalysisTools(
     toolContext,
     android,
