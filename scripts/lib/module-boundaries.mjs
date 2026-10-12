@@ -8,6 +8,7 @@ const MIGRATED_PROVIDER_ROOTS = new Set([
   "evm",
   "go",
   "wasm",
+  "captures",
   "android",
   "firmware",
   "ghidra",

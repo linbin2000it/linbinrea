@@ -1,3 +1,6 @@
+import type { PacketCaptureService } from "../application/captures/PacketCaptureService.js";
+import { createPacketCaptureService } from "../composition/captures.js";
+import { registerCaptureTools } from "./registerCaptureTools.js";
 import type { WasmArtifactService } from "../application/wasm/WasmArtifactService.js";
 import { createWasmArtifactService } from "../composition/wasm.js";
 import { registerWasmTools } from "./registerWasmTools.js";
@@ -109,6 +112,7 @@ const ACTIVE_TARGET_INSTRUCTIONS =
 export interface CreateServerOptions {
   readonly environment?: Readonly<NodeJS.ProcessEnv>;
   readonly delivery?: ToolResultDelivery;
+  readonly packetCapture?: PacketCaptureService;
   readonly wasmArtifact?: WasmArtifactService;
   readonly evmInterface?: EvmInterfaceService;
   readonly logger?: Logger;
@@ -147,6 +151,9 @@ const installSessionToolAvailability = (
   const policy = sessionAvailabilityPolicy(options.availabilityPolicy, {
     optionalProviderLoadFailures: options.optionalProviderLoadFailures,
     optionalFeatures: {
+      packetCaptureEnabled:
+        options.packetCapture !== undefined ||
+        isAbsolute(environment.REA_TSHARK_COMMAND ?? ""),
       wasmArtifactEnabled:
         options.wasmArtifact !== undefined ||
         isAbsolute(environment.REA_WABT_BIN_DIRECTORY ?? ""),
@@ -246,6 +253,8 @@ export const createServer = (
   );
   const android =
     options.androidAnalysis ?? createAndroidAnalysisProvider(environment);
+  const packetCapture =
+    options.packetCapture ?? createPacketCaptureService(environment);
   const wasmArtifact =
     options.wasmArtifact ?? createWasmArtifactService(environment);
   const apktool =
@@ -259,6 +268,7 @@ export const createServer = (
     providerClose ??= Promise.allSettled([
       android.close(),
       wasmArtifact.close(),
+      packetCapture.close(),
       apktool.close(),
       jeb.close(),
       adbDevice.close(),
@@ -326,6 +336,13 @@ export const createServer = (
     for (const result of results)
       if (result.status === "rejected") throw result.reason;
   };
+  registerCaptureTools(
+    server,
+    packetCapture,
+    toolLogger,
+    recordEvidence,
+    analysisAdmission,
+  );
   registerConfiguredAnalysisTools(
     toolContext,
     android,

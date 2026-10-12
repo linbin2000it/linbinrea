@@ -67,6 +67,10 @@ explicit path or endpoint and do not need it.
   [historical captures](https://github.com/morluto/rea/blob/main/docs/web-network-captures.md) for the exact upstream
   profile and credential exclusions.
 - User-owned Electron runtime already open: `list_electron_targets`.
+- Recorded packet captures: `inspect_packet_capture` with selected TShark fields,
+  display filters and decode-as rules. Supply `REA_TSHARK_COMMAND`; see
+  [capture guide](https://github.com/morluto/rea/blob/main/docs/packet-captures.md).
+  Packet limits count input packets before filtering; this does not perform live capture.
 - Explicit local WebAssembly artifact: `inspect_wasm_artifact`. Supply WABT 1.0.42
   through `REA_WABT_BIN_DIRECTORY`; retain exact byte/tool identity and decoded WAT.
   Select JavaScript glue and candidate paths explicitly and preserve URL/path
