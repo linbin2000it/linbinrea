@@ -406,7 +406,11 @@ const resolveReference = (
           reference.kind === "require" ||
             reference.kind === "static-import" ||
             reference.kind === "dynamic-import"
-            ? moduleKindForJavaScriptReference(sourcePath, reference.kind)
+            ? moduleKindForJavaScriptReference(
+                sourcePath,
+                reference.kind,
+                reference.resolution_mode,
+              )
             : undefined,
         );
   if (path === null) return null;

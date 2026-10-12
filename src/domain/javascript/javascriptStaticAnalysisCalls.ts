@@ -291,10 +291,13 @@ export const addReference = (
       : { specifier, expression: null };
   addLocatedFinding(context, {
     collection: context.accumulator.references,
-    key: `reference\0${input.kind}\0${reference.specifier ?? reference.expression}`,
+    key: `reference\0${input.kind}\0${reference.specifier ?? reference.expression}${input.resolutionMode === undefined ? "" : `\0${input.resolutionMode}`}`,
     node: input.node,
     value: {
       kind: input.kind,
+      ...(input.resolutionMode === undefined
+        ? {}
+        : { resolution_mode: input.resolutionMode }),
       ...reference,
       module_key: null,
       location: range(input.node),

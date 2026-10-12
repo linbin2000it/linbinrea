@@ -89,12 +89,13 @@ const semanticReturnSiteId = (
     String(location.end.column),
   ].join(":");
 
-/** Link exports to callables only when lexical resolution is unique and exact. */
+/** Finalize exported bindings only when lexical resolution is unique and exact. */
 export const resolveSemanticModuleCallables = (
   state: JavaScriptSemanticAnalysisState,
   callables: readonly JavaScriptSemanticCallable[],
 ): JavaScriptSemanticModuleLink[] => {
   const callableIds = new Set(callables.map(({ callableId }) => callableId));
+  const resolutionModes = moduleResolutionModesByBinding(state);
   return state.moduleLinks.map((link) => {
     // Named exports follow their lexical binding, including every assignment.
     // A declaration's ID or a callable's display name cannot prove that link.
@@ -107,11 +108,41 @@ export const resolveSemanticModuleCallables = (
       binding === undefined
         ? []
         : callableIdsForBinding(binding, state, callableIds, new Set());
+    const resolutionMode =
+      binding === undefined || link.specifier !== null
+        ? undefined
+        : resolutionModes.get(binding);
     return {
       ...link,
+      ...(resolutionMode === "import" || resolutionMode === "require"
+        ? { resolutionMode }
+        : {}),
       callableId: resolved.length === 1 ? (resolved[0] ?? null) : null,
     };
   });
+};
+
+const moduleResolutionModesByBinding = (
+  state: JavaScriptSemanticAnalysisState,
+): ReadonlyMap<
+  JavaScriptSemanticBindingState,
+  JavaScriptSemanticModuleLink["resolutionMode"] | null
+> => {
+  const modes = new Map<
+    JavaScriptSemanticBindingState,
+    JavaScriptSemanticModuleLink["resolutionMode"] | null
+  >();
+  for (const link of state.moduleLinks) {
+    if (link.kind !== "import" && link.kind !== "require") continue;
+    const binding = state.moduleLinkBindings.get(link);
+    if (binding === undefined) continue;
+    const mode = link.kind === "require" ? "require" : link.resolutionMode;
+    modes.set(
+      binding,
+      modes.has(binding) && modes.get(binding) !== mode ? null : mode,
+    );
+  }
+  return modes;
 };
 
 const directReturnExpressions = (callable: t.Node): ReturnExpression[] =>

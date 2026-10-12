@@ -281,6 +281,7 @@ const resolveModuleTarget = (
       input.link.kind === "require" || input.link.kind === "commonjs-export"
         ? "require"
         : "static-import",
+      input.link.resolutionMode,
     ),
   });
   if (resolution.resolution_status !== "resolved")

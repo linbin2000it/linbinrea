@@ -1,4 +1,5 @@
 import * as t from "@babel/types";
+import { typescriptImportResolutionMode } from "./typescriptImportResolutionMode.js";
 
 import type {
   JavaScriptSemanticBinding,
@@ -283,11 +284,13 @@ const collectImports = (
   node: t.ImportDeclaration,
   state: JavaScriptSemanticAnalysisState,
 ): void => {
+  const resolutionMode = typescriptImportResolutionMode(node);
   if (node.specifiers.length === 0)
     addModuleLink(
       state,
       {
         kind: "import",
+        ...(resolutionMode === undefined ? {} : { resolutionMode }),
         specifier: node.source.value,
         importedName: null,
         localName: null,
@@ -301,6 +304,7 @@ const collectImports = (
       state,
       {
         kind: "import",
+        ...(resolutionMode === undefined ? {} : { resolutionMode }),
         specifier: node.source.value,
         importedName: t.isImportDefaultSpecifier(specifier)
           ? "default"

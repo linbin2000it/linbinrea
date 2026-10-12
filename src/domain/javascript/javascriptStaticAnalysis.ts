@@ -1,4 +1,5 @@
 import * as t from "@babel/types";
+import { typescriptImportResolutionMode } from "./typescriptImportResolutionMode.js";
 import { collectElectronWrappedCallPaths } from "./electronWrappedCallPaths.js";
 import {
   ELECTRON_IDENTITY_LIMITATION,
@@ -241,13 +242,17 @@ const inspectNode = (
   if (
     (t.isImportDeclaration(node) || t.isExportAllDeclaration(node)) &&
     node.source !== undefined
-  )
+  ) {
+    const resolutionMode = t.isImportDeclaration(node)
+      ? typescriptImportResolutionMode(node)
+      : undefined;
     addReference(findings, {
       node,
       kind: "static-import",
       specifier: node.source.value,
+      ...(resolutionMode === undefined ? {} : { resolutionMode }),
     });
-  else if (t.isExportNamedDeclaration(node) && node.source != null)
+  } else if (t.isExportNamedDeclaration(node) && node.source != null)
     addReference(findings, {
       node,
       kind: "static-import",
