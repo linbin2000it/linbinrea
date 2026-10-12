@@ -392,6 +392,7 @@ export interface JavaScriptSemanticFrontier {
 
 /** Static import/export relationship retained for cross-file composition. */
 export interface JavaScriptSemanticModuleLink {
+  readonly resolutionMode?: "import" | "require";
   readonly kind:
     | "import"
     | "require"

@@ -519,15 +519,27 @@ const coverage = z
       ...(resourceLimits === undefined ? {} : { resourceLimits }),
     };
   });
-const moduleLink = z.strictObject({
-  kind: z.enum(["import", "require", "export", "re-export", "commonjs-export"]),
-  specifier: z.string().nullable(),
-  importedName: z.string().nullable(),
-  localName: z.string().nullable(),
-  exportedName: z.string().nullable(),
-  callableId: z.string().nullable(),
-  location: range,
-});
+const moduleLink = z
+  .strictObject({
+    resolutionMode: z.enum(["import", "require"]).optional(),
+    kind: z.enum([
+      "import",
+      "require",
+      "export",
+      "re-export",
+      "commonjs-export",
+    ]),
+    specifier: z.string().nullable(),
+    importedName: z.string().nullable(),
+    localName: z.string().nullable(),
+    exportedName: z.string().nullable(),
+    callableId: z.string().nullable(),
+    location: range,
+  })
+  .transform(({ resolutionMode, ...rest }) => ({
+    ...rest,
+    ...(resolutionMode === undefined ? {} : { resolutionMode }),
+  }));
 const definitionKind = z.enum([
   "import",
   "variable",
